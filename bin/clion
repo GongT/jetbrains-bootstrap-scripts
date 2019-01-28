@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+JB_ROOT="$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")"
+
+source "${JB_ROOT}/jetbrains.boot.sh" CLion clion "$@"
+

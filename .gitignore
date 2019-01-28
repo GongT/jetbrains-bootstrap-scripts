@@ -1,0 +1,6 @@
+*
+!/.gitignore
+!/bin
+!/bin/*
+!/jetbrains.boot.sh
+!/install.sh
