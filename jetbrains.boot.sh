@@ -12,6 +12,11 @@ if [ "$(id -u)" != "0" ]; then
 	export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 fi
 
+DEBUG_ARG=""
+if [ -n "$DEBUG" ]; then
+	DEBUG_ARG="--pipe --wait"
+fi
+
 function exists() {
 	systemctl $USER_ARG list-units --all | grep "${NAME}.service" | grep -q running
 }
@@ -32,6 +37,7 @@ function startup() {
 		fi
 		systemd-run \
 			$USER_ARG \
+			$DEBUG_ARG \
 			--unit="${NAME}.service" \
 			--description="Jetbrains ${NAME} process" \
 			--slice="jetbrains.slice" \
@@ -78,6 +84,7 @@ function _config_ensure() {
 	local CONFIG_FILE="${JB_ROOT}/${NAME}/bin/idea.properties"
 
 	if ! grep -qEe "^$(escape ${LINE})$" "${CONFIG_FILE}" ; then
+		echo "modify config file: ${CONFIG_FILE} with ${LINE}"
 		sed "-i.bak" "s#^\# *$(escape ${N})=.*#${LINE}#g" "${CONFIG_FILE}"
 		if cmp -s "${CONFIG_FILE}" "${CONFIG_FILE}.bak" ; then
 			echo -e "\n${LINE}" >> "${CONFIG_FILE}"
