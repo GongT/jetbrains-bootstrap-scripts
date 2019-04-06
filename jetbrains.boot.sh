@@ -122,7 +122,10 @@ function reset_important_config() {
 	_config_ensure idea.system.path "${JB_ROOT}/DATA/${NAME}/system"
 	_options_ensure '-Xms' 512m
 	_options_ensure '-Xmx' 4G
-	_options_ensure '-javaagent:' "${JB_ROOT}/crack.jar"
+	if [[ -e "${JB_ROOT}/crack.jar" ]] ; then
+		echo "Running cracked"
+		_options_ensure '-javaagent:' "${JB_ROOT}/crack.jar"
+	fi
 }
 
 NAME="$APPLICATION_TITLE"
