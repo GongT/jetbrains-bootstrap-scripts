@@ -24,3 +24,17 @@ function load_application() {
 	local what=$1
 	source "$LIB_ROOT/apps/$what.sh" || die "There's no application named $what"
 }
+
+function pushd() {
+	builtin pushd "$@" >/dev/null
+}
+function popd() {
+	builtin popd >/dev/null
+}
+function push_gitignore_line() {
+	local LINE="$1"
+	if [[ -e .gitignore ]] && cat .gitignore | grep -q -E "^$LINE$" ; then
+		return
+	fi
+	echo "$LINE" >> .gitignore
+}

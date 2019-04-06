@@ -46,7 +46,6 @@ function startup() {
 		systemd-run \
 			${USER_ARG} \
 			${DEBUG_ARG} \
-			--collect \
 			--unit="${NAME}.service" \
 			--description="Jetbrains ${NAME} process" \
 			--slice="jetbrains.slice" \
