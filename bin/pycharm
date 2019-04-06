@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-JB_ROOT="$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")"
-export PATH="/data/DevelopmentRoot/DevelopmentEnvironments/python/bin:${PATH}"
-source "${JB_ROOT}/jetbrains.boot.sh" PyCharm pycharm "$@"
-

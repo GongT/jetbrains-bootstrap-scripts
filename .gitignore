@@ -1,6 +1,7 @@
-*
-!/.gitignore
-!/bin
-!/bin/*
-!/jetbrains.boot.sh
-!/install.sh
+.idea/
+bin
+DATA
+Applications
+PhpStorm
+crack.jar
+.download

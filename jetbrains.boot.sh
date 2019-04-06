@@ -1,19 +1,27 @@
 #!/usr/bin/env bash
 
-if [ -z "${JB_ROOT}" ]; then
+set -e
+set -o pipefail
+set -o errtrace
+
+if [[ -z "${JB_ROOT}" ]]; then
 	echo "do not call this directly" >&2
+	exit 1
+fi
+if [[ -z "${DISPLAY}" ]]; then
+	echo "DISPLAY is not set" >&2
 	exit 1
 fi
 
 JUSER_ARG="-u"
-if [ "$(id -u)" != "0" ]; then
+if [[ "$(id -u)" != "0" ]]; then
 	USER_ARG="--user"
 	JUSER_ARG="--user-unit"
 	export XDG_RUNTIME_DIR="/run/user/$(id -u)"
 fi
 
 DEBUG_ARG=""
-if [ -n "$DEBUG" ]; then
+if [[ -n "$DEBUG" ]]; then
 	DEBUG_ARG="--pipe --wait"
 fi
 
@@ -36,8 +44,9 @@ function startup() {
 			systemctl $USER_ARG reset-failed "${NAME}.service"
 		fi
 		systemd-run \
-			$USER_ARG \
-			$DEBUG_ARG \
+			${USER_ARG} \
+			${DEBUG_ARG} \
+			--collect \
 			--unit="${NAME}.service" \
 			--description="Jetbrains ${NAME} process" \
 			--slice="jetbrains.slice" \
@@ -46,7 +55,7 @@ function startup() {
 			--property="EnvironmentFile=/tmp/jb.${NAME}.shopt" \
 			--property="PrivateTmp=yes" \
 			/bin/bash "${SCRIPT}" "$@"
-		if [ "$?" -ne 0 ]; then
+		if [[ "$?" -ne 0 ]]; then
 			systemctl $USER_ARG status "${NAME}.service" | cat
 			echo -e "\n\n\n"
 			journalctl $JUSER_ARG "${NAME}.service" | cat
@@ -63,9 +72,9 @@ function _push_arg() {
 
 function parse_args() {
 	for ARG in "$@" ; do
-		if [ "$ARG" = "." ] ;  then
+		if [[ "$ARG" = "." ]] ;  then
 			_push_arg "$(pwd)"
-		elif [ "${ARG:0:1}" = "." ] && echo "$ARG" | grep -qE '^\.\.?/' ; then
+		elif [[ "${ARG:0:1}" = "." ]] && echo "$ARG" | grep -qE '^\.\.?/' ; then
 			_push_arg "$(realpath -m "$ARG")"
 		else
 			_push_arg "$ARG"
@@ -81,7 +90,7 @@ function _config_ensure() {
 	local N=$1
 	local V=$2
 	local LINE="${N}=${V}"
-	local CONFIG_FILE="${JB_ROOT}/${NAME}/bin/idea.properties"
+	local CONFIG_FILE="$APPLICATION_PATH/bin/idea.properties"
 
 	if ! grep -qEe "^$(escape ${LINE})$" "${CONFIG_FILE}" ; then
 		echo "modify config file: ${CONFIG_FILE} with ${LINE}"
@@ -97,7 +106,7 @@ function _options_ensure() {
 	local N=$1
 	local V=$2
 	local LINE="${N}${V}"
-	local CONFIG_FILE="${JB_ROOT}/${NAME}/bin/${BASE}64.vmoptions"
+	local CONFIG_FILE="$APPLICATION_PATH/bin/${BASE}64.vmoptions"
 
 	if ! grep -qEe "^$(escape ${LINE})$" "${CONFIG_FILE}" ; then
 		sed "-i.bak" "s#^$(escape ${N}).*#${LINE}#g" "${CONFIG_FILE}"
@@ -113,15 +122,15 @@ function reset_important_config() {
 	_config_ensure idea.system.path "${JB_ROOT}/DATA/${NAME}/system"
 	_options_ensure '-Xms' 512m
 	_options_ensure '-Xmx' 4G
+	_options_ensure '-javaagent:' "${JB_ROOT}/crack.jar"
 }
 
-NAME="$1"
-BASE="$2"
-SCRIPT="${JB_ROOT}/${NAME}/bin/${BASE}.sh"
-CONFIG_FILE="${JB_ROOT}/${NAME}/bin/idea.properties"
+NAME="$APPLICATION_TITLE"
+BASE="$APPLICATION_NAME"
+APPLICATION_PATH="${JB_ROOT}/Applications/${NAME}"
+SCRIPT="$APPLICATION_PATH/bin/${BASE}.sh"
+CONFIG_FILE="$APPLICATION_PATH/${NAME}/bin/idea.properties"
 declare -a ARGV
-
-shift ; shift
 
 parse_args "$@"
 echo "arguments: ${ARGV[*]}" >&2
