@@ -29,12 +29,20 @@ function exists() {
 	systemctl $USER_ARG list-units --all | grep "${NAME}.service" | grep -q running
 }
 
+function exists_fail() {
+	systemctl $USER_ARG list-units --all | grep "${NAME}.service"
+}
+
 function startup() {
 	echo XDG_RUNTIME_DIR=$XDG_RUNTIME_DIR
 	if exists ; then
 		echo "send signal to exists instance"
 		set -x
 		exec "${SCRIPT}" "$@"
+	elif exists_fail ; then
+		journalctl --no-pager -u "${NAME}.service" || true
+		systemctl reset-failed "${NAME}.service" || true
+		echo "Error cleared, please re-run."
 	else
 		reset_important_config
 		echo "starting new instance on display: $DISPLAY"

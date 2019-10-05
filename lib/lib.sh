@@ -22,6 +22,9 @@ function load_application() {
 	export BIN_NAME=""
 	export APPEND_SCRIPT=""
 	local what=$1
+	if [[ -z "$what" ]]; then
+		die "Usage: $0 <app name>"
+	fi
 	source "$LIB_ROOT/apps/$what.sh" || die "There's no application named $what"
 }
 
